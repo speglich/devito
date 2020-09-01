@@ -43,6 +43,7 @@ jobs:
       with:
         command: |
           ssh ${{ secrets.DUG_LOGIN }}@pgpu0001 << EOF
+            conda init bash
             bash
             cd devito
             git fetch
