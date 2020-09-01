@@ -37,13 +37,21 @@ jobs:
       uses: fifsky/ssh-action@master
       with:
         command: |
-          ssh ${{ secrets.DUG_LOGIN }}@pgpu0001 -t 'export branch="${{ steps.extract_branch.outputs.branch }}"; bash' < scripts/ci_mpi.py branch
+          ssh otherhost << EOF
+            cd devito
+            git fetch
+            git checkout ${{ steps.extract_branch.outputs.branch }}
+            git pull
+            ./.github/workflows/ci_mpi.sh
+          EOF
         host: ${{ secrets.DUG_HNODE }}
         port: ${{ secrets.DUG_PORT }}
         user: ${{ secrets.DUG_LOGIN }}
         pass: ${{ secrets.DUG_PASSWORD }}
         args: "-tt"
 
+          #ssh ${{ secrets.DUG_LOGIN }}@pgpu0001 -t 'export branch="${{ steps.extract_branch.outputs.branch }}"; bash' < scripts/ci_mpi.py branch
+          #ssh ${{ secrets.DUG_LOGIN }}@pgpu0001 -t 'export branch="${{ steps.extract_branch.outputs.branch }} && cd devito && "; bash -l'
           #cd ~/devito
           ## Ensure no merge conflicts arise
           #git checkout master
