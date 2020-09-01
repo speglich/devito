@@ -43,6 +43,7 @@ jobs:
       with:
         command: |
           ssh ${{ secrets.DUG_LOGIN }}@pgpu0001 << EOF
+            bash
             cd devito
             git fetch
             git checkout ${{ steps.extract_branch.outputs.branch }}
