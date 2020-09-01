@@ -42,7 +42,7 @@ jobs:
       uses: fifsky/ssh-action@master
       with:
         command: |
-          ssh ${{ secrets.DUG_LOGIN }}@pgpu0001 /bin/bash << EOF
+          ssh -t ${{ secrets.DUG_LOGIN }}@pgpu0001 /bin/bash << EOF
             cd devito
             git fetch
             git checkout ${{ steps.extract_branch.outputs.branch }}
