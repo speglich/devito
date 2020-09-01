@@ -22,15 +22,20 @@ jobs:
 
     steps:
 
-    - name: extract branch name
+    #- name: extract branch name
+      #shell: bash
+      #run: |
+        #if [ "${{ github.head_ref }}" == "" ]; then
+          #branch="master"
+        #else
+          #branch="${{ github.head_ref }}"
+        #fi
+        #echo ::set-output name=branch::$branch
+      #id: extract_branch
+
+    - name: Extract branch name
       shell: bash
-      run: |
-        if [ "${{ github.head_ref }}" == "" ]; then
-          branch="master"
-        else
-          branch="${{ github.head_ref }}"
-        fi
-        echo ::set-output name=branch::$branch
+      run: echo "##[set-output name=branch;]$(echo ${GITHUB_REF#refs/heads/})"
       id: extract_branch
 
     - name: Run DUG test
@@ -42,7 +47,7 @@ jobs:
             git fetch
             git checkout ${{ steps.extract_branch.outputs.branch }}
             git pull
-            ./.github/workflows/ci_mpi.sh
+            ./.github/scripts/ci_mpi.sh
           EOF
         host: ${{ secrets.DUG_HNODE }}
         port: ${{ secrets.DUG_PORT }}
