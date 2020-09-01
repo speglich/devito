@@ -6,7 +6,7 @@ jobs:
 
   test-dug:
     name: dug-test-mpi
-    runs-on: [self-hosted, dug-runner-00]
+    runs-on: [self-hosted, dug-mpi]
 
     env:
 
