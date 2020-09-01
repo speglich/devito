@@ -37,7 +37,7 @@ jobs:
       uses: fifsky/ssh-action@master
       with:
         command: |
-          ssh otherhost << EOF
+          ssh ${{ secrets.DUG_LOGIN }}@pgpu0001 << EOF
             cd devito
             git fetch
             git checkout ${{ steps.extract_branch.outputs.branch }}
