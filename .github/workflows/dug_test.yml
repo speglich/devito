@@ -1,5 +1,8 @@
 name: test_dug
 
+env:
+  OUTPUT_PATH: ${{ github.workspace }}
+
 on: push
 
 jobs:
@@ -19,13 +22,41 @@ jobs:
 
     steps:
 
+    - name: extract branch name
+      shell: bash
+      run: |
+        if [ "${{ github.head_ref }}" == "" ]; then
+          branch="master"
+        else
+          branch="${{ github.head_ref }}"
+        fi
+        echo ::set-output name=branch::$branch
+      id: extract_branch
+
     - name: Run DUG test
       uses: fifsky/ssh-action@master
       with:
         command: |
-          ssh ${{ secrets.DUG_LOGIN }}@pgpu0001 < scripts/ci_mpi.py
+          ssh ${{ secrets.DUG_LOGIN }}@pgpu0001 -t 'export branch="${{ steps.extract_branch.outputs.branch }}"; bash' < scripts/ci_mpi.py branch
         host: ${{ secrets.DUG_HNODE }}
         port: ${{ secrets.DUG_PORT }}
         user: ${{ secrets.DUG_LOGIN }}
         pass: ${{ secrets.DUG_PASSWORD }}
         args: "-tt"
+
+          #cd ~/devito
+          ## Ensure no merge conflicts arise
+          #git checkout master
+          #if [ "${{ steps.extract_branch.outputs.branch }}" == "master" ]; then
+              #git pull
+          #else
+              #git rev-parse --verify --quiet ${{ steps.extract_branch.outputs.branch }}
+              #if [ $? -eq 0 ]; then git branch -D ${{ steps.extract_branch.outputs.branch }}; fi
+              #git fetch
+              #git checkout ${{ steps.extract_branch.outputs.branch }}
+          #fi
+          ## Set error trap to catch any failing test
+          #err=0
+          #trap 'err=1' ERR
+          ## OpenMP offloading
+          #pgaccelinfo
