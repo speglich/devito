@@ -1,0 +1,31 @@
+name: test_dug
+
+on: push
+
+jobs:
+
+  test-dug:
+    name: dug-test-mpi
+    runs-on: [self-hosted, dug-runner-00]
+
+    env:
+
+      # Devito setup
+      DEVITO_LANGUAGE: "openmp"
+      DEVITO_ARCH: "gcc-9"
+      DEVITO_BACKEND: "core"
+      CC: "gcc-9"
+      CXX: "g++-9"
+
+    steps:
+
+    - name: Run DUG test
+      uses: fifsky/ssh-action@master
+      with:
+        command: |
+          ssh ${{ secrets.DUG_LOGIN }}@pgpu0001 < ci_mpi.py
+        host: ${{ secrets.DUG_HNODE }}
+        port: ${{ secrets.DUG_PORT }}
+        user: ${{ secrets.DUG_LOGIN }}
+        pass: ${{ secrets.DUG_PASSWORD }}
+        args: "-tt"
