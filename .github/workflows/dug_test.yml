@@ -22,17 +22,6 @@ jobs:
 
     steps:
 
-    #- name: extract branch name
-      #shell: bash
-      #run: |
-        #if [ "${{ github.head_ref }}" == "" ]; then
-          #branch="master"
-        #else
-          #branch="${{ github.head_ref }}"
-        #fi
-        #echo ::set-output name=branch::$branch
-      #id: extract_branch
-
     - name: Extract branch name
       shell: bash
       run: echo "##[set-output name=branch;]$(echo ${GITHUB_REF#refs/heads/})"
@@ -55,22 +44,3 @@ jobs:
         user: ${{ secrets.DUG_LOGIN }}
         pass: ${{ secrets.DUG_PASSWORD }}
         args: "-tt"
-
-          #ssh ${{ secrets.DUG_LOGIN }}@pgpu0001 -t 'export branch="${{ steps.extract_branch.outputs.branch }}"; bash' < scripts/ci_mpi.py branch
-          #ssh ${{ secrets.DUG_LOGIN }}@pgpu0001 -t 'export branch="${{ steps.extract_branch.outputs.branch }} && cd devito && "; bash -l'
-          #cd ~/devito
-          ## Ensure no merge conflicts arise
-          #git checkout master
-          #if [ "${{ steps.extract_branch.outputs.branch }}" == "master" ]; then
-              #git pull
-          #else
-              #git rev-parse --verify --quiet ${{ steps.extract_branch.outputs.branch }}
-              #if [ $? -eq 0 ]; then git branch -D ${{ steps.extract_branch.outputs.branch }}; fi
-              #git fetch
-              #git checkout ${{ steps.extract_branch.outputs.branch }}
-          #fi
-          ## Set error trap to catch any failing test
-          #err=0
-          #trap 'err=1' ERR
-          ## OpenMP offloading
-          #pgaccelinfo
