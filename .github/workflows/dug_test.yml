@@ -47,7 +47,8 @@ jobs:
             git fetch
             git checkout ${{ steps.extract_branch.outputs.branch }}
             git pull
-            ./.github/scripts/ci_mpi.sh
+            chmod a+x .github/scripts/ci_mpi.sh
+            .github/scripts/ci_mpi.sh
           EOF
         host: ${{ secrets.DUG_HNODE }}
         port: ${{ secrets.DUG_PORT }}
