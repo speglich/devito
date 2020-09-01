@@ -23,7 +23,7 @@ jobs:
       uses: fifsky/ssh-action@master
       with:
         command: |
-          ssh ${{ secrets.DUG_LOGIN }}@pgpu0001 < ci_mpi.py
+          ssh ${{ secrets.DUG_LOGIN }}@pgpu0001 < scripts/ci_mpi.py
         host: ${{ secrets.DUG_HNODE }}
         port: ${{ secrets.DUG_PORT }}
         user: ${{ secrets.DUG_LOGIN }}
