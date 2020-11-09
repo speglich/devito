@@ -5,7 +5,7 @@ on: push
 jobs:
   pytest:
     name: ${{ matrix.name }}
-    runs-on: [self-hosted, X64, macOS]
+    runs-on: [self-hosted, macOS]
 
     env:
       DEVITO_ARCH: "${{ matrix.arch }}"
@@ -34,22 +34,11 @@ jobs:
     - name: Checkout devito
       uses: actions/checkout@v1
 
-    - name: Set up Python ${{ matrix.python-version }}
-      if: matrix.name != 'pytest-docker-py36-gcc-omp'
-      uses: actions/setup-python@v1
-      with:
-        python-version: ${{ matrix.python-version }}
-
-    - name: Build docker image
-      if: matrix.name == 'pytest-docker-py36-gcc-omp'
-      run: |
-          docker build . --file docker/Dockerfile --tag devito_img
-          echo "::set-env name=RUN_CMD::docker run --rm --name testrun devito_img"
-
-    - name: Install GCC ${{ matrix.arch }}
-      if: runner.os == 'linux'
-      run : |
-        sudo apt-get install -y ${{ matrix.arch }}
+    #- name: Set up Python ${{ matrix.python-version }}
+      #if: matrix.name != 'pytest-docker-py36-gcc-omp'
+      #uses: actions/setup-python@v1
+      #with:
+        #python-version: ${{ matrix.python-version }}
 
     - name: Reduce number of tests for OSX
       if: runner.os == 'macOS'
@@ -57,14 +46,13 @@ jobs:
         echo "::set-env name=TESTS::tests/test_operator.py"
 
     - name: Install dependencies
-      if: matrix.name != 'pytest-docker-py36-gcc-omp'
       run: |
-        pip install --upgrade pip
-        pip install -e .
+        pip3 install --upgrade pip
+        pip3 install -e .
 
     - name: Test with pytest
       run: |
-        $RUN_CMD pytest -m "not parallel" --cov --cov-config=.coveragerc --cov-report=xml $TESTS
+        $RUN_CMD python3 -m pytest -m "not parallel" --cov --cov-config=.coveragerc --cov-report=xml $TESTS
 
     #- name: Upload coverage to Codecov
       #if: matrix.name != 'pytest-docker-py36-gcc-omp'
