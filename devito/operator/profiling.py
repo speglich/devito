@@ -282,6 +282,7 @@ class AdvisorProfiler(AdvancedProfiler):
         else:
             return iet
     '''
+
     def instrument(self, iet, timer):
         # Look for the presence of a time loop within the IET of the Operator
         mapper = {}
