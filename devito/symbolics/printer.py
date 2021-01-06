@@ -5,7 +5,7 @@ Utilities to turn SymPy objects into C strings.
 import numpy as np
 
 from mpmath.libmp import prec_to_dps, to_str
-from sympy.printing.ccode import C99CodePrinter
+from sympy.printing.c import C99CodePrinter
 
 __all__ = ['ccode']
 
@@ -68,6 +68,12 @@ class CodePrinter(C99CodePrinter):
 
         result = '%'.join(args)
         return result
+
+    def _print_Abs(self, expr):
+        """Print absolute value of an expression"""
+        if getattr(expr.args[0], 'dtype', None) == np.float32:
+            return "fabs(%s)" % expr.args[0]
+        return "abs(%s)" % expr.args[0]
 
     def _print_Float(self, expr):
         """Print a Float in C-like scientific notation."""
