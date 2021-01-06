@@ -69,12 +69,6 @@ class CodePrinter(C99CodePrinter):
         result = '%'.join(args)
         return result
 
-    def _print_Abs(self, expr):
-        """Print absolute value of an expression"""
-        if getattr(expr.args[0], 'dtype', None) == np.float32:
-            return "fabs(%s)" % expr.args[0]
-        return "abs(%s)" % expr.args[0]
-
     def _print_Float(self, expr):
         """Print a Float in C-like scientific notation."""
         prec = expr._prec
