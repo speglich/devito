@@ -14,6 +14,7 @@ from cached_property import cached_property
 import numpy as np
 import sympy
 
+from devito.arch import device_pool
 from devito.parameters import configuration
 from devito.tools import (Pickable, as_list, as_tuple, dtype_to_cstr, filter_ordered,
                           is_integer)
@@ -363,31 +364,19 @@ class DeviceID(Constant):
             return None
 
     def _arg_defaults(self, comm=None, automatic=False):
-        if not automatic:
+        if automatic:
+            return {self.name: device_pool.acquire()}
+        else:
             return {self.name: self.data}
-
-        # TODO enhancement: use a system-level device pool to run on unloaded devices
-
-        # TODO: use the MPI comm to create a sub-comm with the other ranks on
-        # the same physical node and then get a local rank. This will be used to
-        # assign different Devices to different MPI ranks
-        raise NotImplementedError
-
-        # gpu_info = get_gpu_info()  # Memoized routine, hence not expensive
-        # if gpu_info is None:
-        #     raise ValueError("Unable to detect devices")
-
-        # value = comm.rank % gpu_info['ncards']
-
-        # return {self.name: value}
 
     def _arg_values(self, **kwargs):
         try:
-            v = kwargs[self.name]
-            if is_integer(v):
-                return {self.name: kwargs[self.name]}
-            elif v != 'automatic':
-                raise ValueError("Illegal `%s=%s`" % (self.name, v))
+            rid = kwargs[self.name]
+            if is_integer(rid):
+                device_pool.acquire(rid)
+                return {self.name: rid}
+            elif rid != 'automatic':
+                raise ValueError("Illegal `%s=%s`" % (self.name, rid))
             else:
                 automatic = True
         except KeyError:
@@ -403,6 +392,9 @@ class DeviceID(Constant):
                 except AttributeError:
                     pass
             return self._arg_defaults(comm=self.comm, automatic=automatic)
+
+    def _arg_apply(self, *args, **kwargs):
+        from IPython import embed; embed()
 
     # Pickling support
     # Note: when `objcomm` is unpickled, the carried MPI communicator is
