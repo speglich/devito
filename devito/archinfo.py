@@ -214,20 +214,18 @@ def get_gpu_info():
                 gpu_infos.append(gpu_info)
         return filter_real_gpus(gpu_infos)
 
-    # Run homogeneity checks on a list of GPU, return GPU with count if homogeneous,
-    #   otherwise None
-    def homogenise_gpus(gpu_infos):
-        if gpu_infos == []:
-            warning('No graphics cards detected')
-            return None
+    def nvidiasmi_gpu_info(text):
+        from IPython import embed; embed()
 
+    # Run homogeneity checks on a list of GPU, attach GPU with count if homogeneous,
+    # otherwise None
+    def homogenise_gpus(gpu_infos):
         if all_equal(gpu_infos):
             gpu_infos[0]['ncards'] = len(gpu_infos)
             return gpu_infos[0]
-
-        warning('Different models of graphics cards detected')
-
-        return None
+        else:
+            warning('Different models of graphics cards detected')
+            return None
 
     # Obtain textual gpu info and delegate parsing to helper functions
 
@@ -236,10 +234,9 @@ def get_gpu_info():
         info_cmd = ['lshw', '-C', 'video']
         proc = Popen(info_cmd, stdout=PIPE, stderr=DEVNULL)
         raw_info = str(proc.stdout.read())
-
         gpu_infos = lshw_gpu_info(raw_info)
-        return homogenise_gpus(gpu_infos)
-
+        if gpu_infos:
+            return homogenise_gpus(gpu_infos)
     except OSError:
         pass
 
@@ -248,13 +245,25 @@ def get_gpu_info():
         info_cmd = ['lspci']
         proc = Popen(info_cmd, stdout=PIPE, stderr=DEVNULL)
         raw_info = str(proc.stdout.read())
-
         # Parse the information for all the devices listed with lspci
         gpu_infos = lspci_gpu_info(raw_info)
-        return homogenise_gpus(gpu_infos)
-
+        if gpu_infos:
+            return homogenise_gpus(gpu_infos)
     except OSError:
         pass
+
+    try:
+        # This will only work with NVidia cards
+        info_cmd = ['nvidia-smi', '-L']
+        proc = Popen(info_cmd, stdout=PIPE, stderr=DEVNULL)
+        raw_info = str(proc.stdout.read())
+        gpu_infos = nvidiasmi_gpu_info(raw_info)
+        if gpu_infos:
+            return homogenise_gpus(gpu_infos)
+    except OSError:
+        pass
+
+    warning('No graphics cards detected')
 
     return None
 
