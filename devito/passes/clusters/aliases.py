@@ -136,7 +136,6 @@ def cire(cluster, mode, sregistry, options, platform):
         context = flatten(c.exprs for c in processed) + list(cluster.exprs)
 
     processed.append(cluster)
-    from IPython import embed; embed()
 
     return processed
 

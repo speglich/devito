@@ -1308,7 +1308,7 @@ class TestAliases(object):
         u = TimeFunction(name="u", grid=grid, time_order=2, space_order=2)
         m = Function(name='m', grid=grid)
 
-        # The Eq stems from an iso-acoustic stencil
+        # The Eq stems from an OT2 iso-acoustic stencil
         pde = m * u.dt2 - u.laplace
         eq = Eq(u.forward, solve(pde, u.forward))
 
