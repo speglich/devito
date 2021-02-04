@@ -1323,6 +1323,21 @@ class TestAliases(object):
         assert len([i for i in FindSymbols().visit(op) if i.is_Array]) == 2
         assert op._profiler._sections['section1'].sops == 97  #TODO
 
+    def test_bho(self):
+        """
+        TODO
+        """
+        grid = Grid(shape=(10, 10, 10), dtype=np.float64)
+
+        f = Function(name='f', grid=grid, space_order=4)
+        v = TimeFunction(name="v", grid=grid, space_order=4)
+
+        eqn = Eq(v.forward, f.dx.dx(x0=1))
+
+        op = Operator(eqn)
+
+        from IPython import embed; embed()
+
     @pytest.mark.parametrize('rotate', [False, True])
     def test_drop_redundants_after_fusion(self, rotate):
         """
@@ -1606,12 +1621,12 @@ class TestAliases(object):
 
     @switchconfig(profiling='advanced')
     @pytest.mark.parametrize('expr,exp_arrays,exp_ops', [
-        ('f.dx.dx + g.dx.dx', (1, 1, 2, (1, 0)), (46, 40, 49, 11)),
-        ('v.dx.dx + p.dx.dx', (2, 2, 2, (0, 2)), (61, 49, 49, 25)),
+#        ('f.dx.dx + g.dx.dx', (1, 1, 2, (1, 0)), (46, 40, 49, 11)),
+#        ('v.dx.dx + p.dx.dx', (2, 2, 2, (0, 2)), (61, 49, 49, 25)),
         ('(v.dx + v.dy).dx - (v.dx + v.dy).dy + 2*f.dx.dx + f*f.dy.dy + f.dx.dx(x0=1)',
          (3, 3, 4, (0, 3)), (217, 199, 208, 94)),
-        ('(g*(1 + f)*v.dx).dx + (2*g*f*v.dx).dx', (1, 1, 2, (1, 0)), (50, 44, 53, 19)),
-        ('g*(f.dx.dx + g.dx.dx)', (1, 1, 2, (0, 1)), (47, 41, 50, 18)),
+#        ('(g*(1 + f)*v.dx).dx + (2*g*f*v.dx).dx', (1, 1, 2, (1, 0)), (50, 44, 53, 19)),
+#        ('g*(f.dx.dx + g.dx.dx)', (1, 1, 2, (0, 1)), (47, 41, 50, 18)),
     ])
     def test_sum_of_nested_derivatives(self, expr, exp_arrays, exp_ops):
         """
@@ -1636,38 +1651,39 @@ class TestAliases(object):
 
         eqn = Eq(v.forward, eval(expr))
 
-        op0 = Operator(eqn, opt=('noop', {'openmp': True}))
-        op1 = Operator(eqn, opt=('collect-derivs', 'cire-sops', {'openmp': True}))
-        op2 = Operator(eqn, opt=('collect-derivs', 'cire-sops', {'openmp': True,
-                                                                 'cire-maxalias': True}))
-        op3 = Operator(eqn, opt=('cire-sops', {'openmp': True, 'cire-maxalias': True}))
+        #op0 = Operator(eqn, opt=('noop', {'openmp': True}))
+        #op1 = Operator(eqn, opt=('collect-derivs', 'cire-sops', {'openmp': True}))
+        #op2 = Operator(eqn, opt=('collect-derivs', 'cire-sops', {'openmp': True,
+        #                                                         'cire-maxalias': True}))
+        #op3 = Operator(eqn, opt=('cire-sops', {'openmp': True, 'cire-maxalias': True}))
         op4 = Operator(eqn, opt=('advanced', {'openmp': True, 'cire-maxalias': True}))
 
         # Check code generation
-        assert len([i for i in FindSymbols().visit(op1) if i.is_Array]) == exp_arrays[0]
-        assert len([i for i in FindSymbols().visit(op2) if i.is_Array]) == exp_arrays[1]
-        assert len([i for i in FindSymbols().visit(op3) if i.is_Array]) == exp_arrays[2]
-        assert len([i for i in FindSymbols().visit(op4._func_table['bf0'].root)
-                    if i.is_Array and i._mem_shared]) == exp_arrays[3][0]
-        assert len([i for i in FindSymbols().visit(op4._func_table['bf0'].root)
-                    if i.is_Array and i._mem_local]) == exp_arrays[3][1]
+        #assert len([i for i in FindSymbols().visit(op1) if i.is_Array]) == exp_arrays[0]
+        #assert len([i for i in FindSymbols().visit(op2) if i.is_Array]) == exp_arrays[1]
+        #assert len([i for i in FindSymbols().visit(op3) if i.is_Array]) == exp_arrays[2]
+        #assert len([i for i in FindSymbols().visit(op4._func_table['bf0'].root)
+        #            if i.is_Array and i._mem_shared]) == exp_arrays[3][0]
+        #assert len([i for i in FindSymbols().visit(op4._func_table['bf0'].root)
+        #            if i.is_Array and i._mem_local]) == exp_arrays[3][1]
 
         # Check numerical output
-        op0(time_M=1)
-        exp_v = norm(v)
-        for n, op in enumerate([op1, op2, op3, op4]):
+        #op0(time_M=1)
+        #exp_v = norm(v)
+        for n, op in enumerate([op4]):#[op1, op2, op3, op4]):
             v1 = TimeFunction(name="v", grid=grid, space_order=4)
             v1.data_with_halo[:] = 1.2
 
             summary = op(time_M=1, v=v1)
-            assert np.isclose(exp_v, norm(v1), atol=1e-11, rtol=1e-8)
+            from IPython import embed; embed()
+            #assert np.isclose(exp_v, norm(v1), atol=1e-11, rtol=1e-8)
 
             # Also check against expected operation count to make sure
             # all redundancies have been detected correctly
-            try:
-                assert summary[('section0', None)].ops == exp_ops[n]
-            except:
-                from IPython import embed; embed()
+            #try:
+            #    assert summary[('section0', None)].ops == exp_ops[n]
+            #except:
+            #    from IPython import embed; embed()
 
     @pytest.mark.parametrize('rotate', [False, True])
     def test_maxpar_option(self, rotate):

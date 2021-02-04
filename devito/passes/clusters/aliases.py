@@ -710,6 +710,7 @@ def lower_schedule(cluster, schedule, chosen, sregistry, options):
         # all of the PARALLEL `cluster` Dimensions appear in `writeto`
         parallel = [d for d, v in cluster.properties.items() if PARALLEL in v]
         sharing = 'shared' if set(parallel) == set(writeto.itdimensions) else 'local'
+        from IPython import embed; embed()
 
         # The memory region of the Array. On the heap, unless the user has
         # explicitly requested allocation on the stack
