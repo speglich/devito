@@ -1304,17 +1304,24 @@ class TestAliases(object):
         Test that scalar divisions are hoisted out of the inner loops if requested.
         """
         grid = Grid(shape=(3, 3, 3))
+        s = grid.time_dim.spacing
 
-        u = TimeFunction(name="u", grid=grid, time_order=2, space_order=2)
-        m = Function(name='m', grid=grid)
+        u = TimeFunction(name="u", grid=grid, time_order=2, space_order=4)
+        m = Function(name='m', grid=grid, space_order=4)
 
-        # The Eq stems from an OT2 iso-acoustic stencil
+        # The Eq implements an OT2 iso-acoustic stencil
         pde = m * u.dt2 - u.laplace
         eq = Eq(u.forward, solve(pde, u.forward))
-
         op = Operator(eq, opt=('advanced', {'cire-mincost-inv': 25}))
+        assert len([i for i in FindSymbols().visit(op) if i.is_Array]) == 1
+        assert op._profiler._sections['section1'].sops == 33
 
-        from IPython import embed; embed()
+        # The Eq implements an OT4 iso-acoustic stencil
+        pde = m * u.dt2 - u.laplace - s**2/12 * u.biharmonic(1/m)
+        eq = Eq(u.forward, solve(pde, u.forward))
+        op = Operator(eq, opt=('advanced', {'cire-mincost-inv': 25}))
+        assert len([i for i in FindSymbols().visit(op) if i.is_Array]) == 2
+        assert op._profiler._sections['section1'].sops == 67
 
     @pytest.mark.parametrize('rotate', [False, True])
     def test_drop_redundants_after_fusion(self, rotate):
