@@ -63,7 +63,7 @@ def count(exprs, query):
     return dict(mapper)
 
 
-def estimate_cost(exprs, estimate=False):
+def estimate_cost(exprs, estimate=False, aa=False):
     """
     Estimate the operation count of an expression.
 
@@ -106,22 +106,17 @@ def estimate_cost(exprs, estimate=False):
         exprs = [i.rhs if i.is_Equality else i for i in as_tuple(exprs)]
         operations = flatten(retrieve_xops(i) for i in exprs)
         flops = 0
+        #if aa:
+        #    from IPython import embed; embed()
         for op in operations:
             if op.is_Function:
                 if estimate and q_routine(op):
-                    terminals = retrieve_terminals(op, deep=True)
-                    if all(i.function.is_const for i in terminals):
-                        flops += 1
-                    else:
-                        flops += trascendentals_cost.get(op.__class__, 1)
+                    flops += trascendentals_cost.get(op.__class__, 1)
                 else:
                     flops += 1
             elif op.is_Pow:
                 if estimate:
-                    terminals = retrieve_terminals(op, deep=True)
-                    if all(i.function.is_const for i in terminals):
-                        flops += 1
-                    elif op.exp.is_Number:
+                    if op.exp.is_Number:
                         if op.exp < 0:
                             flops += div_cost
                         elif op.exp == 0:

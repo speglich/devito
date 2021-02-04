@@ -6,7 +6,8 @@ from cached_property import cached_property
 from conftest import skipif, EVAL  # noqa
 from devito import (NODE, Eq, Inc, Constant, Function, TimeFunction, SparseTimeFunction,  # noqa
                     Dimension, SubDimension, Grid, Operator, norm, grad, div, dimensions,
-                    switchconfig, configuration, centered, first_derivative, transpose)
+                    switchconfig, configuration, centered, first_derivative, solve,
+                    transpose)
 from devito.exceptions import InvalidOperator
 from devito.finite_differences.differentiable import diffify
 from devito.ir import (DummyEq, Expression, Iteration, FindNodes, FindSymbols,
@@ -1297,6 +1298,23 @@ class TestAliases(object):
         arrays = [i for i in FindSymbols().visit(trees[0].root) if i.is_Array]
         assert len(arrays) == 2
         assert all(i._mem_heap and not i._mem_external for i in arrays)
+
+    def test_hoisting_scalar_divs(self):
+        """
+        Test that scalar divisions are hoisted out of the inner loops if requested.
+        """
+        grid = Grid(shape=(3, 3, 3))
+
+        u = TimeFunction(name="u", grid=grid, time_order=2, space_order=2)
+        m = Function(name='m', grid=grid)
+
+        # The Eq stems from an iso-acoustic stencil
+        pde = m * u.dt2 - u.laplace
+        eq = Eq(u.forward, solve(pde, u.forward))
+
+        op = Operator(eq, opt=('advanced', {'cire-mincost-inv': 25}))
+
+        from IPython import embed; embed()
 
     @pytest.mark.parametrize('rotate', [False, True])
     def test_drop_redundants_after_fusion(self, rotate):
