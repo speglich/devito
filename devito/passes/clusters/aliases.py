@@ -718,32 +718,31 @@ def lower_schedule(cluster, schedule, chosen, sregistry, options):
         # Create the expression computing the alias
         name = sregistry.make_name()
         indices = []
-        for i in writeto:
-            try:
-                # E.g., `xs`
-                sub_iterators = writeto.sub_iterators[i.dim]
-                assert len(sub_iterators) == 1
-                indices.append(sub_iterators[0])
-            except KeyError:
-                # E.g., `z` -- a non-shifted Dimension
-                indices.append(i.dim - i.lower)
-        try:
-            array = Array(name=name, dimensions=dimensions, halo=halo,
-                          dtype=cluster.dtype, scope=scope, sharing=sharing)
-            obj = array[indices]
-        except IndexError:
+        if writeto:
+            for i in writeto:
+                try:
+                    # E.g., `xs`
+                    sub_iterators = writeto.sub_iterators[i.dim]
+                    assert len(sub_iterators) == 1
+                    indices.append(sub_iterators[0])
+                except KeyError:
+                    # E.g., `z` -- a non-shifted Dimension
+                    indices.append(i.dim - i.lower)
+            obj = Array(name=name, dimensions=dimensions, halo=halo,
+                        dtype=cluster.dtype, scope=scope, sharing=sharing)
+            indexify = lambda idx: obj[idx]
+        else:
             # Degenerate case: scalar expression
             assert writeto.size == 0
-            scalar = Scalar(name=name, dtype=cluster.dtype)
-            obj = scalar.indexify()
-        expression = Eq(obj, alias)
+            obj = Scalar(name=name, dtype=cluster.dtype)
+            indexify = lambda idx: obj
+        expression = Eq(indexify(indices), alias)
 
-        # Create the substitution rules so that we can use the newly created
-        # temporary in place of the aliasing expressions
+        # Create the substitution rules for the aliasing expressions
         for aliased, indices in zip(aliaseds, indicess):
-            subs[aliased] = obj
+            subs[aliased] = indexify(indices)
             if aliased in chosen:
-                subs[chosen[aliased]] = obj
+                subs[chosen[aliased]] = indexify(indices)
             else:
                 # Perhaps part of a composite alias ?
                 pass
