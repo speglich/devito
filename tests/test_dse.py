@@ -1323,21 +1323,6 @@ class TestAliases(object):
         assert len([i for i in FindSymbols().visit(op) if i.is_Array]) == 2
         assert op._profiler._sections['section1'].sops == 97  #TODO
 
-    def test_bho(self):
-        """
-        TODO
-        """
-        grid = Grid(shape=(10, 10, 10), dtype=np.float64)
-
-        f = Function(name='f', grid=grid, space_order=4)
-        v = TimeFunction(name="v", grid=grid, space_order=4)
-
-        eqn = Eq(v.forward, f.dx.dx(x0=1))
-
-        op = Operator(eqn)
-
-        from IPython import embed; embed()
-
     @pytest.mark.parametrize('rotate', [False, True])
     def test_drop_redundants_after_fusion(self, rotate):
         """
@@ -1618,6 +1603,38 @@ class TestAliases(object):
         # all redundancies have been detected correctly
         assert summary1[('section0', None)].ops == 19
         assert summary2[('section0', None)].ops == 15
+
+    def test_nested_first_derivative_w_shift(self):
+        """
+        Test the correct scheduling of (degenerate) aliases due to nested
+        first derivatives with fixed shifting.
+        """
+        grid = Grid(shape=(10, 10, 10), dtype=np.float64)
+
+        f = Function(name='f', grid=grid, space_order=2)
+        v = TimeFunction(name="v", grid=grid, space_order=2)
+        v1 = TimeFunction(name="v", grid=grid, space_order=2)
+
+        f.data_with_halo[:] =\
+            np.linspace(-10, 10, f.data_with_halo.size).reshape(*f.shape_with_halo)
+        v.data_with_halo[:] = 3.12
+        v1.data_with_halo[:] = 3.12
+
+        eqn = Eq(v.forward, v + f.dx.dx(x0=1))
+
+        #op0 = Operator(eqn, opt=('noop', {'openmp': True}))
+        op1 = Operator(eqn, opt=('advanced', {'openmp': True}))
+
+        # Check code generation
+        #arrays = [i for i in FindSymbols().visit(op1._func_table['bf0'].root)
+        #          if i.is_Array and i._mem_local]
+        #assert len(arrays) == 1
+
+        # Check numerical output
+        #op0(time_M=1)
+        op1(time_M=1, v=v1)
+        from IPython import embed; embed()
+        assert np.isclose(norm(v), norm(v1), rtol=1e-5)
 
     @switchconfig(profiling='advanced')
     @pytest.mark.parametrize('expr,exp_arrays,exp_ops', [
