@@ -13,7 +13,6 @@ from devito.passes.iet.parpragma import (PragmaSimdTransformer, PragmaShmTransfo
 from devito.passes.iet.languages.C import CBB
 from devito.passes.iet.languages.utils import make_clause_reduction
 from devito.symbolics import CondEq, DefFunction
-from devito.tools import as_tuple
 
 __all__ = ['SimdOmpizer', 'Ompizer', 'OmpIteration', 'OmpRegion',
            'DeviceOmpizer', 'DeviceOmpIteration', 'DeviceOmpDataManager',
