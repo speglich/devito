@@ -714,16 +714,11 @@ def lower_schedule(cluster, schedule, chosen, sregistry, options):
         # (e.g., MPI's comp/comm overlap does that)
         dimensions = [d.parent if d.is_Sub else d for d in writeto.itdimensions]
 
+        # The halo must be set according to the size of writeto space
         halo = [(abs(i.lower), abs(i.upper)) for i in writeto]
 
-        # The data sharing mode of the Array. It can safely be `shared` only if
-        # all of the PARALLEL `cluster` Dimensions appear in `writeto`
-        #TODO: DROP HERE...
-        parallel = [d for d, v in cluster.properties.items() if PARALLEL in v]
-        sharing = 'shared' if set(parallel) == set(writeto.itdimensions) else 'local'
-
-        array = Array(name=sregistry.make_name(), dimensions=dimensions, halo=halo,
-                      dtype=cluster.dtype, sharing=sharing)
+        array = Array(name=sregistry.make_name(), dimensions=dimensions,
+                      halo=halo, dtype=cluster.dtype)
 
         indices = []
         for i in writeto:
